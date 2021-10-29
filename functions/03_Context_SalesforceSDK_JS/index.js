@@ -33,7 +33,7 @@ export default async function (event, context, logger) {
       Name: `${name}-${Date.now()}`,
       AccountNumber: accountNumber,
       Industry: industry,
-      Description: "My Account",
+      Description: context.org.dataApi.accessToken,
       Type: type,
       Website: website
     }
