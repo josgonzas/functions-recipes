@@ -33,6 +33,7 @@ export default async function (event, context, logger) {
       Name: `${name}-${Date.now()}`,
       AccountNumber: accountNumber,
       Industry: industry,
+      Description: "My Account",
       Type: type,
       Website: website
     }
