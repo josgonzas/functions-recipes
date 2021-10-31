@@ -18,6 +18,9 @@ export default async function (event, context, logger) {
     )}`
   );
 
+  //Load jsforce to use for Bulk API
+  var jsforce = require('jsforce');
+
   // Extract Properties from Payload
   const { name, accountNumber, industry, type, website } = event.data;
 
