@@ -18,8 +18,7 @@ export default async function (event, context, logger) {
     )}`
   );
 
-  //Load jsforce to use for Bulk API
-  var jsforce = require('jsforce');
+
 
   // Extract Properties from Payload
   const { name, accountNumber, industry, type, website } = event.data;
@@ -41,6 +40,17 @@ export default async function (event, context, logger) {
       Website: website
     }
   };
+
+  // Call Bulk API to get a list of datajobs
+  try {
+    
+  } catch (err) {
+    // Catch any DML errors and pass the throw an error with the message
+    const errorMessage = `Failed to call Bulk API. Root Cause: ${err.message}`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+
 
   try {
     // Insert the record using the SalesforceSDK DataApi and get the new Record Id from the result
