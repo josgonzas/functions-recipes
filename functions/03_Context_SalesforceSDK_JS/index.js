@@ -43,7 +43,10 @@ export default async function (event, context, logger) {
 
   // Call Bulk API to get a list of datajobs
   try {
-    
+    // Solo como ejemplo
+    // Insert the record using the SalesforceSDK DataApi and get the new Record Id from the result
+    const { id: recordId } = await context.org.dataApi.create(account);
+    logger.error(recordId);
   } catch (err) {
     // Catch any DML errors and pass the throw an error with the message
     const errorMessage = `Failed to call Bulk API. Root Cause: ${err.message}`;
