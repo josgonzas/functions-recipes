@@ -14,7 +14,7 @@
     "node": "^14.0"
   },
   "dependencies": {
-    "jsforce": "^1.10.0"
+    "jsforce": "^1.10.1"
   },
   "scripts": {
     "lint": "eslint . --ext .js --config .eslintrc",
