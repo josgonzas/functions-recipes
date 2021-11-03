@@ -1,3 +1,6 @@
+
+import jsforce from "jsforce";
+
 /**
  * Receives a payload containing account details, and creates the record.
  * It then uses a SOQL query to return the newly created Account.
@@ -18,7 +21,18 @@ export default async function (event, context, logger) {
     )}`
   );
 
+  const results = {
+    success: 0,
+    failures: 0
+  }
 
+
+    // Establish JSForce Connection from Context
+    const conn = new jsforce.Connection({
+      accessToken: context.org.accessToken,
+      instanceUrl: context.org.baseUrl,
+      version: context.org.apiVersion
+    });
 
   // Extract Properties from Payload
   const { name, accountNumber, industry, type, website } = event.data;
@@ -41,12 +55,15 @@ export default async function (event, context, logger) {
     }
   };
 
+  
+
   // Call Bulk API to get a list of datajobs
   try {
     // Solo como ejemplo
-    // Insert the record using the SalesforceSDK DataApi and get the new Record Id from the result
-    const { id: recordId } = await context.org.dataApi.create(account);
-    logger.error(recordId);
+    conn.bulk.query("SELECT Id, Name, NumberOfEmployees FROM Account")
+    .on('record', function(rec) { console.log(rec); results.success++;})
+    .on('error', function(err) { console.error(err); results.failures++;});
+    
   } catch (err) {
     // Catch any DML errors and pass the throw an error with the message
     const errorMessage = `Failed to call Bulk API. Root Cause: ${err.message}`;
@@ -54,7 +71,7 @@ export default async function (event, context, logger) {
     throw new Error(errorMessage);
   }
 
-
+  
   try {
     // Insert the record using the SalesforceSDK DataApi and get the new Record Id from the result
     const { id: recordId } = await context.org.dataApi.create(account);
@@ -69,4 +86,6 @@ export default async function (event, context, logger) {
     logger.error(errorMessage);
     throw new Error(errorMessage);
   }
+  
+  
 }
