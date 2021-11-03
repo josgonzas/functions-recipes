@@ -34,6 +34,13 @@ export default async function (event, context, logger) {
       version: context.org.apiVersion
     });
 
+    logger.info(
+      `AccessToken context.org.accesstoken: ${conn.accessToken}`
+    );
+    logger.info(
+      `AccessToken dataApi.accesstoken: ${context.org.dataApi.accessToken}`
+    );
+
   // Extract Properties from Payload
   const { name, accountNumber, industry, type, website } = event.data;
 
