@@ -29,7 +29,7 @@ export default async function (event, context, logger) {
 
     // Establish JSForce Connection from Context
     const conn = new jsforce.Connection({
-      accessToken: context.org.accessToken,
+      accessToken: context.org.dataApi.accessToken,
       instanceUrl: context.org.baseUrl,
       version: context.org.apiVersion
     });
