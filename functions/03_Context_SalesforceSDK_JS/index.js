@@ -1,5 +1,6 @@
 
 import jsforce from "jsforce";
+import { request } from "undici";
 
 /**
  * Receives a payload containing account details, and creates the record.
@@ -33,6 +34,44 @@ export default async function (event, context, logger) {
       instanceUrl: context.org.baseUrl,
       version: context.org.apiVersion
     });
+
+    //Direct call to Bulk API v1 
+    //GetAllJobs call is not implemented in jsforce
+    // Extract dataApi information from context
+    const { accessToken, baseUrl, apiVersion } = context.org.dataApi;
+
+      // Setup Bulk API Authorization headers
+  const authHeaders = {
+    Authorization: `Bearer ${accessToken}`
+  };
+
+    // Construct API URL for Bulk API v1
+    const apiUrl = `${baseUrl}/services/data/v${apiVersion}`;
+
+    // Query All Jobs
+    const { statusCode: statusCodeJob, body: bodyJob } = await request(
+      `${apiUrl}/jobs/ingest`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders
+        },
+        body: JSON.stringify({})
+      }
+    );
+
+    // Get Job Response
+  const getAllJobs = await bodyJob.json();
+
+  if (statusCodeJob !== 200) {
+    logger.error(JSON.stringify(getAllJobs));
+    throw new Error(`Create job failed`);
+  }
+  else{
+    logger.info(JSON.stringify(getAllJobs));
+  }
+
 
     logger.info(
       `AccessToken context.org.accesstoken: ${conn.accessToken}`
