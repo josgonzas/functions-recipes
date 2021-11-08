@@ -49,8 +49,9 @@ export default async function (event, context, logger) {
     const apiUrl = `${baseUrl}/services/data/v${apiVersion}`;
 
     // Query All Jobs
+    //jobType=Classic is to filter just Bulk API v1 jobs. Delete this param if you want to retrieve all jobs
     const { statusCode: statusCodeJob, body: bodyJob } = await request(
-      `${apiUrl}/jobs/ingest`,
+      `${apiUrl}/jobs/ingest/?jobType=Classic`,
       {
         method: "GET",
         headers: {
@@ -66,10 +67,18 @@ export default async function (event, context, logger) {
 
   if (statusCodeJob !== 200) {
     logger.error(JSON.stringify(getAllJobs));
-    throw new Error(`Create job failed`);
+    throw new Error(`Get All Jobs `);
   }
   else{
-    logger.info(JSON.stringify(getAllJobs));
+    logger.info('Resultados');
+    getAllJobs.records.forEach(function(table){
+      var jobId = table.id;
+      if (!table.operationType=="query"){
+        logger.info(jobId);
+      }
+      
+    })
+    //logger.info(JSON.stringify(getAllJobs));
   }
 
 
