@@ -70,24 +70,29 @@ export default async function (event, context, logger) {
     throw new Error(`Get All Jobs `);
   }
   else{
+    //chequear el valor de la variable Done para ver si es necesario hacer más llamadas
+    
+    
     logger.info('Resultados');
-    getAllJobs.records.forEach(function(table){
+    /*getAllJobs.records.forEach(function(table){
       var jobId = table.id;
-      if (!table.operationType=="query"){
-        logger.info(jobId);
+      var Operation = table.operation;
+      if (Operation!=="query"){
+        logger.info("Review Job: " +jobId + " - " + Operation);
       }
       
-    })
+    })*/
+
+      //Esto igual hay que hacerlo con un reduce
+    for(const job of getAllJobs.records){
+      if (job.operation!=="query"){
+        logger.info("For Review Job: " +job.id + " - " + job.operation);
+      } 
+    }
+
+
     //logger.info(JSON.stringify(getAllJobs));
   }
-
-
-    logger.info(
-      `AccessToken context.org.accesstoken: ${conn.accessToken}`
-    );
-    logger.info(
-      `AccessToken dataApi.accesstoken: ${context.org.dataApi.accessToken}`
-    );
 
   // Extract Properties from Payload
   const { name, accountNumber, industry, type, website } = event.data;
