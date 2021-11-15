@@ -1,6 +1,10 @@
 
 import jsforce from "jsforce";
 import { request } from "undici";
+import { Readable } from "stream";
+//const csv = require('csv-parser');
+import csv from "csv-parser";
+
 
 /**
  * Receives a payload containing account details, and creates the record.
@@ -22,10 +26,31 @@ export default async function (event, context, logger) {
     )}`
   );
 
+  var key = function(obj){
+    // Some unique object-dependent key
+    return obj.jobId; // Just an example
+  };
+
   const results = {
     success: 0,
     failures: 0
   }
+
+  const parseSVS = (miCsv) =>
+  new Promise((resolve, reject) => {
+    // Authenticate using multi user mode
+    
+      const readable = Readable.from(miCsv);
+      const results = [];
+
+
+      readable.pipe(csv())
+          .on('data', (data) => results.push(data))
+          .on('end',  () => {
+              resolve(results)
+              
+          });
+  });
 
 
     // Establish JSForce Connection from Context
@@ -51,7 +76,8 @@ export default async function (event, context, logger) {
     // Query All Jobs
     //jobType=Classic is to filter just Bulk API v1 jobs. Delete this param if you want to retrieve all jobs
     const { statusCode: statusCodeJob, body: bodyJob } = await request(
-      `${apiUrl}/jobs/ingest/?jobType=Classic`,
+      //`${apiUrl}/jobs/ingest/?jobType=Classic`,
+      `${apiUrl}/jobs/ingest`,
       {
         method: "GET",
         headers: {
@@ -64,6 +90,9 @@ export default async function (event, context, logger) {
 
     // Get Job Response
   const getAllJobs = await bodyJob.json();
+
+  var arrJobs = [];
+  let createJobControlDict = {};
 
   if (statusCodeJob !== 200) {
     logger.error(JSON.stringify(getAllJobs));
@@ -87,12 +116,123 @@ export default async function (event, context, logger) {
     for(const job of getAllJobs.records){
       if (job.operation!=="query"){
         logger.info("For Review Job: " +job.id + " - " + job.operation);
+        arrJobs.push(job.id);
+
+        let jobControl = {
+          JobId__c : job.id,
+          JobType__c: job.jobType,
+          SystemModStamp__c: job.systemModstamp,
+          State__c: job.state,
+          Operation__c: job.operation,
+          object__c: job.object,
+          numberRecordsFailed__c: 0,
+          numberRecordsProcessed__c: 0,
+          createdDate__c: job.createdDate
+        }
+        createJobControlDict[key(jobControl)] = jobControl;
       } 
     }
 
 
     //logger.info(JSON.stringify(getAllJobs));
   }
+
+  //Call JobInfo to get number of records failed
+      for(const jobId of arrJobs){
+        
+        // Query JobInfo
+        const { statusCode: statusCodeJob, body: bodyJob } = await request(
+          `${apiUrl}/jobs/ingest/${jobId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeaders
+            },
+            body: JSON.stringify({})
+          }
+        );        
+            
+            // Get Job Response
+        const getJobInfo = await bodyJob.json();    
+          
+        if (statusCodeJob !== 200) {
+          logger.error(JSON.stringify(getJobInfo));
+          throw new Error(`Get Info Job Error `);
+        }
+        else{
+          logger.info(JSON.stringify(getJobInfo));
+          //createJobControlDict[getJobInfo.id].numberRecordsFailed = getJobInfo.numberRecordsFailed;
+          //createJobControlDict[getJobInfo.id].numberRecordsProcessed = getJobInfo.numberRecordsProcessed;
+        }
+    }
+
+
+    
+    logger.info('Registros para ser creados');
+    logger.info(createJobControlDict);
+
+    //Call JobInfo to get number of records failed
+    for(const jobId of arrJobs){
+          
+      // Query SuccessResults
+      logger.info('llamada a registros procesados');
+      
+      const { statusCode: statusCodeJob, body: bodyJob } = await request(
+        `${apiUrl}/jobs/ingest/${jobId}/successfulResults/`, 
+        {
+          method: "GET",
+          headers: {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            ...authHeaders
+          },
+          body: JSON.stringify({})
+        }
+      );        
+
+
+
+      logger.info('Completada registros procesados');
+      
+        // Call Bulk API to get a list of datajobs
+    try {
+      logger.info("StatusCode: " + statusCodeJob);
+      // Get Job Response
+      //const getSuccessResults = await bodyJob.json();   
+
+
+      //let recLines = await callWs(options);
+      var lines = await parseSVS(bodyJob);
+      
+
+      
+      logger.info('llamada a registros procesados Finalizada');
+
+        
+      if (statusCodeJob !== 200 && statusCodeJob !== 204) {
+      logger.info('Llamada con error');
+
+        logger.error(JSON.stringify(lines));
+        throw new Error(`Get Info Job Error `);
+      }
+      else{
+      logger.info('Llamada Bien');
+
+        logger.info((lines));
+        //createJobControlDict[getJobInfo.id].numberRecordsFailed = getJobInfo.numberRecordsFailed;
+        //createJobControlDict[getJobInfo.id].numberRecordsProcessed = getJobInfo.numberRecordsProcessed;
+      }
+    }
+    catch (err) {
+      // Catch any DML errors and pass the throw an error with the message
+      const errorMessage = `Failed to call Bulk API. Root Cause: ${err.message}`;
+      logger.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    }
+
+
 
   // Extract Properties from Payload
   const { name, accountNumber, industry, type, website } = event.data;
