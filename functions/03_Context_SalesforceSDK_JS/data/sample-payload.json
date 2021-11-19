@@ -1,7 +1,5 @@
 {
-  "name": "MyAccount",
-  "accountNumber": "123456789",
-  "industry": "Technology",
-  "type": "Prospect",
-  "website": "www.salesforce.com"
+  "job": "",
+  "baseUrl": "https://test.salesforce.com",
+  "accessToken": "Technology"
 }
