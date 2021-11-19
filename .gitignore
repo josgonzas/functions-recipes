@@ -41,3 +41,4 @@ $RECYCLE.BIN/
 # Java
 **/target
 **/.classpath
+functions/03_Context_DataApiQuery_JS/data/sample-payload.json
