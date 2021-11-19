@@ -36,7 +36,7 @@ export default async function (event, context, logger) {
     failures: 0
   }
 
-  const parseSVS = (miCsv) =>
+  const parseCSV = (miCsv) =>
   new Promise((resolve, reject) => {
     // Authenticate using multi user mode
     
@@ -203,8 +203,8 @@ export default async function (event, context, logger) {
 
 
       //let recLines = await callWs(options);
-      var lines = await parseSVS(bodyJob);
-      
+      var lines = await parseCSV(bodyJob);
+      var errors = [];
 
       
       logger.info('llamada a registros procesados Finalizada');
@@ -218,8 +218,21 @@ export default async function (event, context, logger) {
       }
       else{
       logger.info('Llamada Bien');
+        let i = 0;
+        //logger.info((lines));
+        for(const line of lines){
+          logger.info(line.toString());
+          if(line.success ==="false"){
+            var errorRecord={
+              number: i,
+              errorMessage: line.Error
+            }
+            errors.push(errorRecord);
+            logger.info("Error!! : " + i + " --" + line.Error);
+          }
 
-        logger.info((lines));
+          i=i+1;
+        }
         //createJobControlDict[getJobInfo.id].numberRecordsFailed = getJobInfo.numberRecordsFailed;
         //createJobControlDict[getJobInfo.id].numberRecordsProcessed = getJobInfo.numberRecordsProcessed;
       }
